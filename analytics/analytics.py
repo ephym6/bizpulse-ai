@@ -299,7 +299,7 @@ prepare_sales_data = load_and_clean
 
 def build_daily_revenue(df: pd.DataFrame) -> pd.DataFrame:
     """Wrapper for test suite expecting a DataFrame output."""
-    return df.groupby(df["Date"].dt.date)["Revenue"].sum().reset_index()3
+    return df.groupby(df["Date"].dt.date)["Revenue"].sum().reset_index()
 
 # ---------------------------------------------------------------------
 # 3. TEST OUTPUT — proves the pipeline works end to end

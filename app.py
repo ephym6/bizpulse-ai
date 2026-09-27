@@ -30,10 +30,29 @@ st.markdown(
         border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem;
     }
     .bp-disclaimer { color: #6b7280; font-size: 0.85rem; font-style: italic; }
+    [data-testid="stMetricValue"] {
+        font-size: 1.6rem;
+        white-space: normal;
+        overflow-wrap: break-word;
+        line-height: 1.2;
+    }
+    [data-testid="stMetricLabel"] {
+        white-space: normal;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+
+def _format_ksh(value: float) -> str:
+    """Compact currency formatting so large figures don't overflow the KPI cards."""
+    abs_value = abs(value)
+    if abs_value >= 1_000_000:
+        return f"KSh {value / 1_000_000:.2f}M"
+    if abs_value >= 10_000:
+        return f"KSh {value / 1_000:.1f}K"
+    return f"KSh {value:,.0f}"
 
 # ------------------------------------------------------------------------
 # UI-layer helpers. These live entirely in app.py (Member 3's file) rather
@@ -220,13 +239,18 @@ try:
 
     # ---- KPI row ----
     st.subheader("Business Overview")
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Revenue", f"KSh {kpis['total_revenue']:,.0f}")
-    c2.metric("Profit", f"KSh {kpis['total_profit']:,.0f}")
-    c3.metric("Profit Margin", f"{kpis['profit_margin']:.1f}%")
-    c4.metric("Units Sold", f"{kpis['units_sold']:,.0f}")
     growth_display = f"{growth:+.1f}%" if growth is not None else "N/A"
-    c5.metric("Revenue Growth (WoW)", growth_display)
+
+    row1 = st.columns(3)
+    row1[0].metric("Revenue", _format_ksh(kpis["total_revenue"]))
+    row1[1].metric("Profit", _format_ksh(kpis["total_profit"]))
+    row1[2].metric("Profit Margin", f"{kpis['profit_margin']:.1f}%")
+
+    row2 = st.columns(3)
+    row2[0].metric("Units Sold", f"{kpis['units_sold']:,.0f}")
+    row2[1].metric("Revenue Growth (WoW)", growth_display)
+    # row2[2] left empty intentionally to keep card widths consistent with row1
+
     st.caption(f"Top product: **{kpis['top_product']}**  •  Top category: **{kpis['top_category']}**")
 
     st.divider()

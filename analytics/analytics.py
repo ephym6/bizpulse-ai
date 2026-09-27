@@ -50,23 +50,12 @@ def detect_columns(raw_columns) -> dict:
     return detected
 
 
-def load_and_clean(path: str) -> pd.DataFrame:
-    """Load a sales CSV and return a clean, standardized dataframe.
-
-    Works with any CSV whose columns roughly match a standard sales
-    schema (date, product, category, quantity, price, cost) — column
-    names don't need to match exactly. See COLUMN_ALIASES for the
-    recognized variants. Raises a clear ValueError listing exactly
-    which required fields couldn't be found, so the app can surface
-    that to the user instead of failing silently.
-
-    Any extra/unmatched columns from the source file (e.g. a
-    'Sales_Amount' total, a sales rep name) are kept as-is, but Revenue
-    is always computed fresh from Quantity * Selling_Price so a
-    mismatched or unreliable total column can't silently break the
-    numbers.
-    """
-    df = pd.read_csv(path)
+def load_and_clean(path_or_df) -> pd.DataFrame:
+    """Load a sales CSV or take a DataFrame and return a clean, standardized dataframe."""
+    if isinstance(path_or_df, pd.DataFrame):
+        df = path_or_df.copy()
+    else:
+        df = pd.read_csv(path_or_df)
 
     detected = detect_columns(df.columns)
     missing_required = [f for f in REQUIRED_FIELDS if f not in detected]
@@ -304,6 +293,14 @@ def calculate_kpis(df: pd.DataFrame) -> dict:
         "top_category": highest_revenue_category(df),
     }
 
+# Backward-compatibility aliases for tests
+# Backward-compatibility wrappers for test suite
+prepare_sales_data = load_and_clean
+
+def build_daily_revenue(df: pd.DataFrame) -> pd.DataFrame:
+    """Wrapper for test suite expecting a DataFrame output."""
+    return df.groupby(df["Date"].dt.date)["Revenue"].sum().reset_index()3
+
 # ---------------------------------------------------------------------
 # 3. TEST OUTPUT — proves the pipeline works end to end
 # ---------------------------------------------------------------------
@@ -317,10 +314,10 @@ if __name__ == "__main__":
     print(f"Rows loaded (clean): {len(df)}")
     print(f"Date range: {df['Date'].min().date()} to {df['Date'].max().date()}\n")
 
-    print(f"Total Revenue:        KSh {total_revenue(df):,.2f}")
-    print(f"Total Profit:         KSh {total_profit(df):,.2f}")
-    print(f"Profit Margin:        {profit_margin(df) * 100:.1f}%")
-    print(f"Total Units Sold:     {total_quantity_sold(df):,}")
+    print(f"Total Revenue:         KSh {total_revenue(df):,.2f}")
+    print(f"Total Profit:          KSh {total_profit(df):,.2f}")
+    print(f"Profit Margin:         {profit_margin(df) * 100:.1f}%")
+    print(f"Total Units Sold:      {total_quantity_sold(df):,}")
     print(f"Best-Selling Product: {best_selling_product(df)}")
     print(f"Top Revenue Category: {highest_revenue_category(df)}\n")
 

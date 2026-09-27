@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from utils.validation import validate_sales_data
-from analytics.analytics import prepare_sales_data, calculate_kpis, build_daily_revenue, build_category_summary, build_product_summary
+from analytics.analytics import load_and_clean, calculate_kpis, daily_revenue, top_categories, top_products
 from ai.anomaly import detect_daily_revenue_anomalies
 from ai.recommendations import generate_fallback_recommendations, build_recommendation_prompt
 
@@ -53,6 +53,35 @@ def _format_ksh(value: float) -> str:
     if abs_value >= 10_000:
         return f"KSh {value / 1_000:.1f}K"
     return f"KSh {value:,.0f}"
+
+
+def _to_daily_frame(series: pd.Series) -> pd.DataFrame:
+    """Adapt analytics.daily_revenue()'s Series (indexed by date) into the
+    Date/Revenue DataFrame shape the rest of the app (and ai/anomaly.py)
+    expects. Keeping this shim here means anomaly.py and recommendations.py
+    don't need to change even though the analytics engine now returns a
+    Series instead of a flat DataFrame."""
+    out = series.rename("Revenue").reset_index()
+    out.columns = ["Date", "Revenue"]
+    out["Date"] = pd.to_datetime(out["Date"])
+    return out.sort_values("Date").reset_index(drop=True)
+
+
+def _to_category_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """analytics.top_categories() now returns Category as the index with a
+    Quantity column instead of Units; flatten it back to plain columns."""
+    out = df.reset_index().rename(columns={"Quantity": "Units"})
+    return out
+
+
+def _to_product_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """analytics.top_products() now returns Product as the index, drops the
+    Category column, renames Units to Quantity, and has no Margin % column.
+    Rebuild the shape the health score / insights / recommendations code
+    (and ai/recommendations.py) still expect."""
+    out = df.reset_index().rename(columns={"Quantity": "Units"})
+    out["Margin %"] = (out["Profit"] / out["Revenue"] * 100).where(out["Revenue"] > 0, 0)
+    return out
 
 # ------------------------------------------------------------------------
 # UI-layer helpers. These live entirely in app.py (Member 3's file) rather
@@ -205,15 +234,21 @@ with open("data/sample_sales.csv", "rb") as f:
     )
 
 try:
+    # load_and_clean() (new analytics API) takes a path/file-like object and
+    # does its own pd.read_csv + column-alias detection internally, but we
+    # still need a raw preview/validation pass first, so read once for that
+    # and rewind the uploaded file before handing it to load_and_clean().
     if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
+        raw_df = pd.read_csv(uploaded_file)
+        clean_source = uploaded_file
     elif use_sample:
-        df = pd.read_csv("data/sample_sales.csv")
+        raw_df = pd.read_csv("data/sample_sales.csv")
+        clean_source = "data/sample_sales.csv"
     else:
         st.info("Upload a CSV file to begin, or tick **Use sample dataset** in the sidebar.")
         st.stop()
 
-    is_valid, errors = validate_sales_data(df)
+    is_valid, errors = validate_sales_data(raw_df)
     if not is_valid:
         st.error("The uploaded file has validation errors:")
         for error in errors:
@@ -221,14 +256,19 @@ try:
         st.stop()
 
     with st.expander("Preview uploaded data", expanded=False):
-        st.dataframe(df.head(10), use_container_width=True)
+        st.dataframe(raw_df.head(10), use_container_width=True)
 
-    df = prepare_sales_data(df)
+    if uploaded_file is not None:
+        uploaded_file.seek(0)
+    df = load_and_clean(clean_source)
 
     kpis = calculate_kpis(df)
-    daily = build_daily_revenue(df)
-    categories = build_category_summary(df)
-    products = build_product_summary(df)
+    daily = _to_daily_frame(daily_revenue(df))
+    categories = _to_category_frame(top_categories(df))
+    # top_products() defaults to the top 5 by revenue; the health score and
+    # insight logic below need every product to get accurate concentration
+    # and total-revenue figures, so ask for all of them explicitly.
+    products = _to_product_frame(top_products(df, n=df["Product"].nunique()))
     anomalies = detect_daily_revenue_anomalies(daily)
 
     growth = _weekly_growth(daily)

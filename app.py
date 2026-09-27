@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from utils.validation import validate_sales_data
-from analytics.analytics import prepare_sales_data, calculate_kpis, build_daily_revenue, build_category_summary, build_product_summary
+from analytics.analytics import load_and_clean, calculate_kpis, daily_revenue, top_categories, top_products
 from ai.anomaly import detect_daily_revenue_anomalies
 from ai.recommendations import generate_fallback_recommendations, build_recommendation_prompt
 
@@ -30,10 +30,58 @@ st.markdown(
         border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem;
     }
     .bp-disclaimer { color: #6b7280; font-size: 0.85rem; font-style: italic; }
+    [data-testid="stMetricValue"] {
+        font-size: 1.6rem;
+        white-space: normal;
+        overflow-wrap: break-word;
+        line-height: 1.2;
+    }
+    [data-testid="stMetricLabel"] {
+        white-space: normal;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+
+def _format_ksh(value: float) -> str:
+    """Compact currency formatting so large figures don't overflow the KPI cards."""
+    abs_value = abs(value)
+    if abs_value >= 1_000_000:
+        return f"KSh {value / 1_000_000:.2f}M"
+    if abs_value >= 10_000:
+        return f"KSh {value / 1_000:.1f}K"
+    return f"KSh {value:,.0f}"
+
+
+def _to_daily_frame(series: pd.Series) -> pd.DataFrame:
+    """Adapt analytics.daily_revenue()'s Series (indexed by date) into the
+    Date/Revenue DataFrame shape the rest of the app (and ai/anomaly.py)
+    expects. Keeping this shim here means anomaly.py and recommendations.py
+    don't need to change even though the analytics engine now returns a
+    Series instead of a flat DataFrame."""
+    out = series.rename("Revenue").reset_index()
+    out.columns = ["Date", "Revenue"]
+    out["Date"] = pd.to_datetime(out["Date"])
+    return out.sort_values("Date").reset_index(drop=True)
+
+
+def _to_category_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """analytics.top_categories() now returns Category as the index with a
+    Quantity column instead of Units; flatten it back to plain columns."""
+    out = df.reset_index().rename(columns={"Quantity": "Units"})
+    return out
+
+
+def _to_product_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """analytics.top_products() now returns Product as the index, drops the
+    Category column, renames Units to Quantity, and has no Margin % column.
+    Rebuild the shape the health score / insights / recommendations code
+    (and ai/recommendations.py) still expect."""
+    out = df.reset_index().rename(columns={"Quantity": "Units"})
+    out["Margin %"] = (out["Profit"] / out["Revenue"] * 100).where(out["Revenue"] > 0, 0)
+    return out
 
 # ------------------------------------------------------------------------
 # UI-layer helpers. These live entirely in app.py (Member 3's file) rather
@@ -186,15 +234,21 @@ with open("data/sample_sales.csv", "rb") as f:
     )
 
 try:
+    # load_and_clean() (new analytics API) takes a path/file-like object and
+    # does its own pd.read_csv + column-alias detection internally, but we
+    # still need a raw preview/validation pass first, so read once for that
+    # and rewind the uploaded file before handing it to load_and_clean().
     if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
+        raw_df = pd.read_csv(uploaded_file)
+        clean_source = uploaded_file
     elif use_sample:
-        df = pd.read_csv("data/sample_sales.csv")
+        raw_df = pd.read_csv("data/sample_sales.csv")
+        clean_source = "data/sample_sales.csv"
     else:
         st.info("Upload a CSV file to begin, or tick **Use sample dataset** in the sidebar.")
         st.stop()
 
-    is_valid, errors = validate_sales_data(df)
+    is_valid, errors = validate_sales_data(raw_df)
     if not is_valid:
         st.error("The uploaded file has validation errors:")
         for error in errors:
@@ -202,14 +256,19 @@ try:
         st.stop()
 
     with st.expander("Preview uploaded data", expanded=False):
-        st.dataframe(df.head(10), use_container_width=True)
+        st.dataframe(raw_df.head(10), use_container_width=True)
 
-    df = prepare_sales_data(df)
+    if uploaded_file is not None:
+        uploaded_file.seek(0)
+    df = load_and_clean(clean_source)
 
     kpis = calculate_kpis(df)
-    daily = build_daily_revenue(df)
-    categories = build_category_summary(df)
-    products = build_product_summary(df)
+    daily = _to_daily_frame(daily_revenue(df))
+    categories = _to_category_frame(top_categories(df))
+    # top_products() defaults to the top 5 by revenue; the health score and
+    # insight logic below need every product to get accurate concentration
+    # and total-revenue figures, so ask for all of them explicitly.
+    products = _to_product_frame(top_products(df, n=df["Product"].nunique()))
     anomalies = detect_daily_revenue_anomalies(daily)
 
     growth = _weekly_growth(daily)
@@ -220,13 +279,18 @@ try:
 
     # ---- KPI row ----
     st.subheader("Business Overview")
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Revenue", f"KSh {kpis['total_revenue']:,.0f}")
-    c2.metric("Profit", f"KSh {kpis['total_profit']:,.0f}")
-    c3.metric("Profit Margin", f"{kpis['profit_margin']:.1f}%")
-    c4.metric("Units Sold", f"{kpis['units_sold']:,.0f}")
     growth_display = f"{growth:+.1f}%" if growth is not None else "N/A"
-    c5.metric("Revenue Growth (WoW)", growth_display)
+
+    row1 = st.columns(3)
+    row1[0].metric("Revenue", _format_ksh(kpis["total_revenue"]))
+    row1[1].metric("Profit", _format_ksh(kpis["total_profit"]))
+    row1[2].metric("Profit Margin", f"{kpis['profit_margin']:.1f}%")
+
+    row2 = st.columns(3)
+    row2[0].metric("Units Sold", f"{kpis['units_sold']:,.0f}")
+    row2[1].metric("Revenue Growth (WoW)", growth_display)
+    # row2[2] left empty intentionally to keep card widths consistent with row1
+
     st.caption(f"Top product: **{kpis['top_product']}**  •  Top category: **{kpis['top_category']}**")
 
     st.divider()
@@ -237,7 +301,7 @@ try:
         st.subheader("Business Health")
         st.markdown(
             f'<div class="bp-card">'
-            f'<div class="bp-health-score">{health["score"]}/100</div>'
+            f'<div class="bp-health-score" style="color:#111827;">{health["score"]}/100</div>'
             f'<div style="color:#6b7280;">{health["label"]}</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -267,7 +331,10 @@ try:
         if insights:
             for icon, title, body in insights:
                 st.markdown(
-                    f'<div class="bp-insight-card"><strong>{icon} {title}</strong><br>{body}</div>',
+                    f'<div class="bp-insight-card">'
+                    f'<strong style="color:#111827;">{icon} {title}</strong><br>'
+                    f'<span style="color:#374151;">{body}</span>'
+                    f'</div>',
                     unsafe_allow_html=True,
                 )
         else:
@@ -281,8 +348,9 @@ try:
             for _, row in anomalies.iterrows():
                 st.markdown(
                     f'<div class="bp-anomaly-card">'
-                    f'<strong>🚨 Anomaly detected</strong><br>'
-                    f'{row["Date"].date()}: revenue was KSh {row["Revenue"]:,.0f} (z-score {row["z_score"]:.2f}).'
+                    f'<strong style="color:#7f1d1d;">🚨 Anomaly detected</strong><br>'
+                    f'<span style="color:#7f1d1d;">{row["Date"].date()}: revenue was KSh {row["Revenue"]:,.0f} '
+                    f'(z-score {row["z_score"]:.2f}).</span>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -294,7 +362,13 @@ try:
     recommendations = generate_fallback_recommendations(kpis, categories, products, anomalies)
     st.caption("Live LLM advisor not connected in this build — showing analytics-driven recommendations instead. Dashboard functionality is unaffected.")
     for i, rec in enumerate(recommendations, start=1):
-        st.markdown(f'<div class="bp-rec-card"><strong>{i}.</strong> {rec}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="bp-rec-card">'
+            f'<strong style="color:#1e3a8a;">{i}.</strong> '
+            f'<span style="color:#1e3a8a;">{rec}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
     with st.expander("Show LLM-ready prompt"):
         st.code(build_recommendation_prompt(kpis, categories, products, anomalies))

@@ -301,7 +301,7 @@ try:
         st.subheader("Business Health")
         st.markdown(
             f'<div class="bp-card">'
-            f'<div class="bp-health-score">{health["score"]}/100</div>'
+            f'<div class="bp-health-score" style="color:#111827;">{health["score"]}/100</div>'
             f'<div style="color:#6b7280;">{health["label"]}</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -331,7 +331,10 @@ try:
         if insights:
             for icon, title, body in insights:
                 st.markdown(
-                    f'<div class="bp-insight-card"><strong>{icon} {title}</strong><br>{body}</div>',
+                    f'<div class="bp-insight-card">'
+                    f'<strong style="color:#111827;">{icon} {title}</strong><br>'
+                    f'<span style="color:#374151;">{body}</span>'
+                    f'</div>',
                     unsafe_allow_html=True,
                 )
         else:
@@ -345,8 +348,9 @@ try:
             for _, row in anomalies.iterrows():
                 st.markdown(
                     f'<div class="bp-anomaly-card">'
-                    f'<strong>🚨 Anomaly detected</strong><br>'
-                    f'{row["Date"].date()}: revenue was KSh {row["Revenue"]:,.0f} (z-score {row["z_score"]:.2f}).'
+                    f'<strong style="color:#7f1d1d;">🚨 Anomaly detected</strong><br>'
+                    f'<span style="color:#7f1d1d;">{row["Date"].date()}: revenue was KSh {row["Revenue"]:,.0f} '
+                    f'(z-score {row["z_score"]:.2f}).</span>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -358,7 +362,13 @@ try:
     recommendations = generate_fallback_recommendations(kpis, categories, products, anomalies)
     st.caption("Live LLM advisor not connected in this build — showing analytics-driven recommendations instead. Dashboard functionality is unaffected.")
     for i, rec in enumerate(recommendations, start=1):
-        st.markdown(f'<div class="bp-rec-card"><strong>{i}.</strong> {rec}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="bp-rec-card">'
+            f'<strong style="color:#1e3a8a;">{i}.</strong> '
+            f'<span style="color:#1e3a8a;">{rec}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
     with st.expander("Show LLM-ready prompt"):
         st.code(build_recommendation_prompt(kpis, categories, products, anomalies))

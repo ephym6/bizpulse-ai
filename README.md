@@ -2,11 +2,39 @@
 
 > **Turn business data into better decisions.**
 
+🎥 [View Demo Presentation](YOUR_GOOGLE_SLIDES_LINK)
+
 BizPulse AI is an AI-powered business intelligence prototype designed to help small and medium-sized businesses transform everyday sales data into understandable metrics, anomaly alerts, business insights, and actionable recommendations.
 
 Instead of leaving SME owners to interpret spreadsheets manually, BizPulse analyzes transaction data, highlights what matters, detects unusual business activity, and uses AI to translate verified findings into practical actions.
 
 The project was developed during the **GOMYCODE Hackathon 2026** with a focus on the **Artefact Data & AI Award**.
+
+---
+
+## 🎥 Project Demo & Presentation
+
+### Presentation Slides
+📊 **BizPulse AI - Hackathon Demo**
+
+[View Presentation Slides](YOUR_GOOGLE_SLIDES_LINK)
+
+### Demo Flow
+
+The presentation demonstrates:
+
+- The SME problem and target user
+- CSV upload and analytics workflow
+- KPI dashboard and Business Health Score
+- Statistical anomaly detection
+- Google Gemini AI Business Advisor
+- Deterministic AI fallback
+- Responsible AI and human oversight
+- Testing, reliability and business value
+
+**Core demo journey:**
+
+CSV Upload → KPIs & Trends → Anomaly Detection → AI Recommendations → Human Decision
 
 ---
 

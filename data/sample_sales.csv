@@ -1,0 +1,31 @@
+Date,Product,Category,Quantity,Selling Price,Cost Price
+2026-09-01,Milk 500ml,Dairy,12,80,55
+2026-09-01,Bread,Bakery,10,70,48
+2026-09-01,Soda 500ml,Drinks,15,90,72
+2026-09-02,Milk 500ml,Dairy,14,80,55
+2026-09-02,Bread,Bakery,8,70,48
+2026-09-02,Rice 2kg,Groceries,6,320,250
+2026-09-03,Milk 500ml,Dairy,16,80,55
+2026-09-03,Soda 500ml,Drinks,18,90,72
+2026-09-03,Soap,Household,7,120,85
+2026-09-04,Bread,Bakery,13,70,48
+2026-09-04,Rice 2kg,Groceries,7,320,250
+2026-09-04,Soap,Household,9,120,85
+2026-09-05,Milk 500ml,Dairy,19,80,55
+2026-09-05,Soda 500ml,Drinks,20,90,72
+2026-09-05,Rice 2kg,Groceries,8,320,250
+2026-09-06,Milk 500ml,Dairy,18,80,55
+2026-09-06,Bread,Bakery,15,70,48
+2026-09-06,Soap,Household,10,120,85
+2026-09-07,Milk 500ml,Dairy,3,80,55
+2026-09-07,Bread,Bakery,2,70,48
+2026-09-07,Soda 500ml,Drinks,3,90,72
+2026-09-08,Milk 500ml,Dairy,17,80,55
+2026-09-08,Rice 2kg,Groceries,9,320,250
+2026-09-08,Soap,Household,8,120,85
+2026-09-09,Milk 500ml,Dairy,20,80,55
+2026-09-09,Bread,Bakery,14,70,48
+2026-09-09,Soda 500ml,Drinks,19,90,72
+2026-09-10,Milk 500ml,Dairy,21,80,55
+2026-09-10,Rice 2kg,Groceries,10,320,250
+2026-09-10,Soap,Household,9,120,85

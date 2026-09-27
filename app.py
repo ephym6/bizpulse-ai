@@ -4,7 +4,10 @@ import pandas as pd
 from utils.validation import validate_sales_data
 from analytics.analytics import load_and_clean, calculate_kpis, daily_revenue, top_categories, top_products
 from ai.anomaly import detect_daily_revenue_anomalies
-from ai.recommendations import generate_fallback_recommendations, build_recommendation_prompt
+from ai.recommendations import (
+    generate_recommendations,
+    build_recommendation_prompt
+)
 
 st.set_page_config(page_title="BizPulse AI", page_icon="📊", layout="wide")
 
@@ -359,8 +362,17 @@ try:
 
     # ---- AI Recommendations ----
     st.subheader("AI Business Advisor")
-    recommendations = generate_fallback_recommendations(kpis, categories, products, anomalies)
-    st.caption("Live LLM advisor not connected in this build — showing analytics-driven recommendations instead. Dashboard functionality is unaffected.")
+    recommendations = generate_recommendations(
+        kpis,
+        categories,
+        products,
+        anomalies
+    )
+    st.caption(
+        "Recommendations are generated from verified, aggregated "
+        "business metrics. If the AI service is unavailable, "
+        "BizPulse automatically falls back to analytics-driven guidance."
+    )
     for i, rec in enumerate(recommendations, start=1):
         st.markdown(
             f'<div class="bp-rec-card">'

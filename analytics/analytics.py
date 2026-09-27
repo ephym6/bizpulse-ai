@@ -31,13 +31,8 @@ def calculate_kpis(df: pd.DataFrame) -> dict:
     }
 
 def build_daily_revenue(df: pd.DataFrame) -> pd.DataFrame:
-    daily = df.copy()
-    daily["Date"] = daily["Date"].dt.normalize()
-    return (
-        daily.groupby("Date", as_index=False)["Revenue"]
-        .sum()
-        .sort_values("Date")
-    )
+    """Wrapper for test suite expecting a DataFrame output."""
+    return df.groupby(df["Date"].dt.date)["Revenue"].sum().reset_index()
 
 def build_category_summary(df: pd.DataFrame) -> pd.DataFrame:
     summary = (

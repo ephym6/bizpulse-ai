@@ -1,8 +1,448 @@
+# ============================================================
+# BizPulse AI - .gitignore
+# Python / Streamlit / Data Science / ML Project
+# ============================================================
+
+
+# ============================================================
+# 1. Python cache and compiled files
+# ============================================================
+
 __pycache__/
 *.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+
+# ============================================================
+# 2. Virtual environments
+# ============================================================
+
 .venv/
 venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Conda
+.conda/
+conda-env/
+
+
+# ============================================================
+# 3. Environment variables / secrets
+# ============================================================
+
 .env
-.pytest_cache/
+.env.*
+!.env.example
+
+# Streamlit secrets
 .streamlit/secrets.toml
+
+# API keys / secret config files
+secrets.json
+credentials.json
+api_keys.json
+config/secrets.*
+config/credentials.*
+
+# Local private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+
+# ============================================================
+# 4. Streamlit local files
+# ============================================================
+
+.streamlit/
+
+# Keep config.toml if your team intentionally tracks it
+# Uncomment the next line if you want to keep it:
+# !.streamlit/config.toml
+
+
+# ============================================================
+# 5. Jupyter Notebook files
+# ============================================================
+
+.ipynb_checkpoints/
+
+# Optional local notebooks
+notebooks/.ipynb_checkpoints/
+
+# Jupyter runtime files
+.jupyter/
+jupyter_runtime/
+
+
+# ============================================================
+# 6. Testing / coverage
+# ============================================================
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+
+.tox/
+.nox/
+
+pytestdebug.log
+
+
+# ============================================================
+# 7. Type checking / linting / formatting caches
+# ============================================================
+
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+.pyre/
+.pytype/
+
+.ruff_cache/
+
+.cache/
+
+
+# ============================================================
+# 8. Build and package files
+# ============================================================
+
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+
+# ============================================================
+# 9. Logs
+# ============================================================
+
+*.log
+logs/
+log/
+
+debug.log
+error.log
+app.log
+
+
+# ============================================================
+# 10. Local database files
+# ============================================================
+
+*.db
+*.sqlite
+*.sqlite3
+
+database.db
+local.db
+
+
+# ============================================================
+# 11. Temporary files
+# ============================================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.backup
+
+tmp/
+temp/
+
+~$*
+*~
+
+
+# ============================================================
+# 12. Operating system files
+# ============================================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+.directory
+.Trash-*
+
+
+# ============================================================
+# 13. IDE / Editor files
+# ============================================================
+
+# VS Code
+.vscode/
+
+# If you want to track selected VS Code settings,
+# replace the line above with:
+#
+# .vscode/*
+# !.vscode/settings.json
+# !.vscode/extensions.json
+
+# JetBrains / PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+
+
+# ============================================================
+# 14. Machine Learning model files
+# ============================================================
+
+# Trained models can become large and machine-specific
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+*.ckpt
+
+models/
+artifacts/models/
+
+
+# ============================================================
+# 15. Generated analytics / output files
+# ============================================================
+
+outputs/
+output/
+reports/generated/
+generated/
+
+# Generated plots
+plots/
+figures/
+
+# Exported reports
+*.pdf
+*.xlsx
+
+# Uncomment if CSV exports should also be ignored
+# *.csv
+
+
+# ============================================================
+# 16. Data files
+# ============================================================
+
+# IMPORTANT:
+# Do NOT ignore the sample datasets that the team needs.
+#
+# Recommended structure:
+#
+# data/
+# ├── sample_sales.csv              <- tracked
+# ├── bizpulse_minimart_sales.csv   <- tracked
+# ├── bizpulse_cafe_sales.csv       <- tracked
+# ├── raw/                          <- ignored
+# └── processed/                    <- ignored
+
+
+# Large/raw datasets
+data/raw/
+data/external/
+data/downloads/
+
+# Generated / processed datasets
+data/processed/
+data/generated/
+
+# Private datasets
+data/private/
+data/confidential/
+
+
+# ============================================================
+# 17. Large compressed datasets
+# ============================================================
+
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# If you intentionally want to keep a specific ZIP,
+# whitelist it like this:
+#
+# !data/example_dataset.zip
+
+
+# ============================================================
+# 18. User uploads
+# ============================================================
+
+uploads/
+uploaded_files/
+user_uploads/
+
+# Keep uploaded business data out of Git for privacy
+data/uploads/
+
+
+# ============================================================
+# 19. Cached application / analysis data
+# ============================================================
+
+cache/
+cached_data/
+
+*.cache
+
+
+# ============================================================
+# 20. Profiling / debugging outputs
+# ============================================================
+
+*.prof
+*.lprof
+profile_output/
+
+
+# ============================================================
+# 21. Documentation build outputs
+# ============================================================
+
+docs/_build/
+site/
+
+
+# ============================================================
+# 22. Local deployment files
+# ============================================================
+
+# Local Docker overrides
+docker-compose.override.yml
+
+# Local process files
+*.pid
+*.pid.lock
+
+
+# ============================================================
+# 23. Cloud / deployment secrets
+# ============================================================
+
+# Google Cloud
+service-account.json
+google-credentials.json
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# AWS
+.aws/
+
+# Azure
+.azure/
+
+
+# ============================================================
+# 24. Node files
+# Only relevant if frontend later changes to React
+# ============================================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.next/
+out/
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+
+# ============================================================
+# 25. BizPulse-specific local files
+# ============================================================
+
+# Locally generated AI responses
+ai_outputs/
+recommendation_cache/
+
+# Local demo exports
+demo_exports/
+
+# Test uploads
+test_uploads/
+
+# Scratch work
+scratch/
+sandbox/
+
+# Local member-specific notes
+notes.local.md
+TODO.local.md
+
+
+# ============================================================
+# 26. Keep important team files tracked
+# ============================================================
+
+!.env.example
+!README.md
+!CONTRIBUTING.md
+!requirements.txt
+
+# Keep sample/demo datasets required for the hackathon
+!data/sample_sales.csv
+!data/bizpulse_minimart_sales.csv
+!data/bizpulse_cafe_sales.csv
